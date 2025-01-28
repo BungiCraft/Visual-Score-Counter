@@ -1,7 +1,5 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using VisualScoreCounter.Core.Configuration;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;

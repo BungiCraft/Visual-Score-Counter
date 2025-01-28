@@ -4,24 +4,23 @@ using SiraUtil.Zenject;
 using IPA.Config;
 using IPA.Config.Stores;
 using IPALogger = IPA.Logging.Logger;
-using Zenject;
-using VisualScoreCounter.Core;
 using System.Reflection;
 using VisualScoreCounter.Core.Configuration;
+using JetBrains.Annotations;
 
 namespace VisualScoreCounter
 {
-	[Plugin(RuntimeOptions.DynamicInit)]
+	[Plugin(RuntimeOptions.DynamicInit), UsedImplicitly]
 	public class Plugin
 	{
-		public static Harmony harmony;
+		private static Harmony harmony;
 
 #pragma warning disable CS8618
 		internal static Plugin Instance { get; private set; }
 		internal static IPALogger Log { get; private set; }
 #pragma warning restore CS8618
 
-		internal static string PluginName = "VisualScoreCounter";
+		private static string PluginName = "VisualScoreCounter";
 
 		[Init]
 		/// <summary>
@@ -55,6 +54,5 @@ namespace VisualScoreCounter
 		{
 			harmony.UnpatchSelf();
 		}
-
 	}
 }

@@ -7,7 +7,7 @@ namespace VisualScoreCounter.Utils
 {
     internal class BloomFontAssetMaker:PersistentSingleton<BloomFontAssetMaker>
     {
-        public TMP_FontAsset BloomFontAsset()
+        public static TMP_FontAsset BloomFontAsset()
         {
             TMP_FontAsset customFontAsset = TMP_FontAsset.CreateFontAsset(Resources.FindObjectsOfTypeAll<TMP_FontAsset>().First(x => x.name.Contains(
                 "Teko-Medium SDF")).sourceFontFile);

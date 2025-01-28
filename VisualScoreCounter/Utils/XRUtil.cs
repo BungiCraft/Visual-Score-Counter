@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.XR;
 
@@ -10,14 +11,7 @@ namespace VisualScoreCounter.Utils
         {
             var xrDisplaySubsystems = new List<XRDisplaySubsystem>();
             SubsystemManager.GetInstances(xrDisplaySubsystems);
-            foreach (var xrDisplay in xrDisplaySubsystems)
-            {
-                if (xrDisplay.running)
-                {
-                    return true;
-                }
-            }
-            return false;
+            return xrDisplaySubsystems.Any(xrDisplay => xrDisplay.running);
         }
     }
 }

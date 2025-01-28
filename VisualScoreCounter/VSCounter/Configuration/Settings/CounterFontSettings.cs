@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BeatSaberMarkupLanguage.Attributes;
-using BeatSaberMarkupLanguage.Parser;
-
-
-namespace VisualScoreCounter.VSCounter.Configuration {
+﻿namespace VisualScoreCounter.VSCounter.Configuration {
 
     public class CounterFontSettings {
 

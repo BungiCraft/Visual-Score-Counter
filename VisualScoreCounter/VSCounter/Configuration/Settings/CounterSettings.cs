@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace VisualScoreCounter.VSCounter.Configuration {
+﻿namespace VisualScoreCounter.VSCounter.Configuration {
 
     class CounterSettings {
         public virtual float RingScale { get; set; } = 1.0f;

@@ -17,22 +17,21 @@ using BeatSaberMarkupLanguage;
 using Zenject;
 using Tweening;
 using System.Reflection;
+using JetBrains.Annotations;
 
 namespace VisualScoreCounter.VSCounter
 {
-
     public class VSCounterController : ICounter, INoteEventHandler
     {
-
-        private CounterSettings config;
+        private readonly CounterSettings config;
         private readonly CanvasUtility canvasUtility;
         private readonly CustomConfigModel settings;
         [Inject] private CoreGameHUDController coreGameHUD;
-        [Inject] private readonly RelativeScoreAndImmediateRankCounter relativeScoreAndImmediateRank;
-        [Inject] ScoreController scoreController;
-        [Inject] SongTimeTweeningManager uwuTweenyManager;
-        [Inject] private GameplayCoreSceneSetupData setupData;
-        [Inject] private NoteCountProcessor noteCountProcessor;
+        [Inject, UsedImplicitly] private readonly RelativeScoreAndImmediateRankCounter relativeScoreAndImmediateRank;
+        [Inject, UsedImplicitly] private ScoreController scoreController;
+        [Inject, UsedImplicitly] private SongTimeTweeningManager uwuTweenyManager;
+        [Inject, UsedImplicitly] private GameplayCoreSceneSetupData setupData;
+        [Inject, UsedImplicitly] private NoteCountProcessor noteCountProcessor;
 
         // Ring vars
         private readonly string multiplierImageSpriteName = "Circle";
@@ -71,7 +70,7 @@ namespace VisualScoreCounter.VSCounter
                 .Assembly.GetType("ScoreSaber.Core.ReplaySystem.HarmonyPatches.PatchHandleHMDUnmounted")?
                 .GetMethod("Prefix", BindingFlags.Static | BindingFlags.NonPublic);
 
-            if (setupData.practiceSettings != null && setupData.practiceSettings.startInAdvanceAndClearNotes)
+            if (setupData.practiceSettings is { startInAdvanceAndClearNotes: true })
             {
                 float startTime = setupData.practiceSettings.startSongTime;
                 // This LINQ statement is to ensure compatibility with Practice Mode / Practice Plugin
@@ -84,14 +83,14 @@ namespace VisualScoreCounter.VSCounter
             {
                 bIsInReplay = ScoreSaber_playbackEnabled != null && !(bool)ScoreSaber_playbackEnabled.Invoke(null, null);
             }
-            catch { }
-
-            if (bIsInReplay)
+            catch
             {
-                Plugin.Log.Debug("VisualScoreCounter : We are in a replay!");
-            } else {
-                Plugin.Log.Debug("VisualScoreCounter : We are NOT in a replay!");
+                // ignored
             }
+
+            Plugin.Log.Debug(bIsInReplay
+                ? "VisualScoreCounter : We are in a replay!"
+                : "VisualScoreCounter : We are NOT in a replay!");
 
             if (HasNullReferences())
             {
@@ -99,38 +98,29 @@ namespace VisualScoreCounter.VSCounter
             }
 
             InitVSCounter();
-
         }
 
-        public bool HasNullReferences()
+        private bool HasNullReferences()
         {
-            if (canvasUtility == null || settings == null)
+            if (canvasUtility != null && settings != null) return false;
+            Plugin.Log.Error("VisualScoreCounter : VSCounterController has a null reference and cannot initialize! Please file an issue on our github.");
+            Plugin.Log.Error("The following objects are null:");
+
+            if (canvasUtility == null)
             {
-
-                Plugin.Log.Error("VisualScoreCounter : VSCounterController has a null reference and cannot initialize! Please file an issue on our github.");
-                Plugin.Log.Error("The following objects are null:");
-
-                if (canvasUtility == null)
-                {
-                    Plugin.Log.Error("- CanvasUtility");
-                }
-
-                if (settings == null)
-                {
-                    Plugin.Log.Error("- Settings");
-                }
-
-                return true;
+                Plugin.Log.Error("- CanvasUtility");
             }
 
-            return false;
+            if (settings == null)
+            {
+                Plugin.Log.Error("- Settings");
+            }
 
+            return true;
         }
 
         private void InitVSCounter()
         {
-
-
             _currentPercentage = 100.0f;
             percentMajorText = canvasUtility.CreateTextFromSettings(settings);
             percentMajorText.fontSize = config.CounterFontSettings.WholeNumberFontSize;
@@ -138,8 +128,8 @@ namespace VisualScoreCounter.VSCounter
             percentMinorText.fontSize = config.CounterFontSettings.FractionalNumberFontSize;
             if (config.CounterFontSettings.BloomFont)
             {
-                percentMajorText.font = BloomFontAssetMaker.instance.BloomFontAsset();
-                percentMinorText.font = BloomFontAssetMaker.instance.BloomFontAsset();
+                percentMajorText.font = BloomFontAssetMaker.BloomFontAsset();
+                percentMinorText.font = BloomFontAssetMaker.BloomFontAsset();
             }
 
             HUDCanvas currentSettings = canvasUtility.GetCanvasSettingsFromID(settings.CanvasID);
@@ -147,17 +137,21 @@ namespace VisualScoreCounter.VSCounter
             var canvas = canvasUtility.GetCanvasFromID(settings.CanvasID);
             if (canvas != null)
             {
-                Vector2 ringAnchoredPos = (canvasUtility.GetAnchoredPositionFromConfig(settings) * currentSettings.PositionScale);
-                ringAnchoredPos = ringAnchoredPos + GetCounterOffset();
+                if (currentSettings != null)
+                {
+                    Vector2 ringAnchoredPos = (canvasUtility.GetAnchoredPositionFromConfig(settings) * currentSettings.PositionScale);
+                    ringAnchoredPos = ringAnchoredPos + GetCounterOffset();
 
-                ImageView backgroundImage = CreateRing(canvas);
-                backgroundImage.rectTransform.anchoredPosition = ringAnchoredPos;
-                backgroundImage.CrossFadeAlpha(0.05f, 1f, false);
-                backgroundImage.transform.localScale = ComputeRingSize();
-                backgroundImage.type = Image.Type.Simple;
+                    ImageView backgroundImage = CreateRing(canvas);
+                    backgroundImage.rectTransform.anchoredPosition = ringAnchoredPos;
+                    backgroundImage.CrossFadeAlpha(0.05f, 1f, false);
+                    backgroundImage.transform.localScale = ComputeRingSize();
+                    backgroundImage.type = Image.Type.Simple;
 
-                progressRing = CreateRing(canvas);
-                progressRing.rectTransform.anchoredPosition = ringAnchoredPos;
+                    progressRing = CreateRing(canvas);
+                    progressRing.rectTransform.anchoredPosition = ringAnchoredPos;
+                }
+
                 progressRing.transform.localScale = ComputeRingSize();
                 if (config.BloomRing)
                 {
@@ -183,7 +177,6 @@ namespace VisualScoreCounter.VSCounter
             percentMinorText.rectTransform.anchoredPosition += new Vector2(config.CounterFontSettings.FractionalNumberXOffset + config.CounterXOffset, config.CounterFontSettings.FractionalNumberYOffset + config.CounterYOffset);
             relativeScoreAndImmediateRank.relativeScoreOrImmediateRankDidChangeEvent += OnRelativeScoreUpdate;
             scoreController.scoringForNoteFinishedEvent += ScoreController_scoringForNoteFinishedEvent;
-
         }
 
 
@@ -199,7 +192,7 @@ namespace VisualScoreCounter.VSCounter
         }
 
 
-        private bool ShouldProcessNote(NoteData data)
+        private static bool ShouldProcessNote(NoteData data)
             => data.gameplayType switch
             {
                 NoteData.GameplayType.Normal => true,
@@ -246,7 +239,6 @@ namespace VisualScoreCounter.VSCounter
 
         private void UpdateRing(float percentage)
         {
-
             Color nextColor = GetColorForPercent(percentage);
 
             if (config.PercentageRingShowsNextColor)
@@ -263,7 +255,6 @@ namespace VisualScoreCounter.VSCounter
 
             progressRing.fillAmount = ringFillAmount;
             progressRing.SetVerticesDirty();
-
         }
 
         private void UpdateScoreText(float percentage)
@@ -277,9 +268,9 @@ namespace VisualScoreCounter.VSCounter
             {
                 percentMinorColor = GetColorForPercent(percentage + 1);
             }
-            percentMajorText.text = string.Format("{0:D2}", majorPercent);
+            percentMajorText.text = $"{majorPercent:D2}";
             percentMajorText.color = percentMajorColor;
-            percentMinorText.text = string.Format("{0:D2}", minorPercent);
+            percentMinorText.text = $"{minorPercent:D2}";
             percentMinorText.color = percentMinorColor;
         }
 
@@ -423,13 +414,11 @@ namespace VisualScoreCounter.VSCounter
             }
 
             return outColor;
-
         }
 
 
         private float GetCurrentPercentage()
         {
-
             float relativeScore = relativeScoreAndImmediateRank.relativeScore * 100;
             if (relativeScore <= 0)
             {
@@ -454,7 +443,5 @@ namespace VisualScoreCounter.VSCounter
                 UpdateCounter();
             }
         }
-
     }
-
 }
